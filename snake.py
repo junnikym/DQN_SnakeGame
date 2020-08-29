@@ -1,41 +1,51 @@
+from block import Direction, Block, CurveAngle, StrightAngle
 import block
-
-class Direction(enum.Enum):
-	up = 1
-	down = 2
-	left = 3
-	right = 4
+from copy import deepcopy
 
 class Snake :
 	body = []
 	
-	def __init__(self, body) :
+	def __init__(self, body, block_size = 15) :
 		self.body = body
+		self.block_size = block_size
 
-	def impossible_way(self) :
-		head = self.body[len(self.body) - 1]
-		pre_head = self.body[len(self.body) - 2]
+	def get_step_direction(self, i) :
+		cur = self.body[i]
+		pre = self.body[i - 1]
 
 		# vertical check
-		step = head[1] - pre_head[1]
+		step = cur[1] - pre[1]
 
 		if step > 0 :
-			return Direction.up
-		elif step < 0 :
 			return Direction.down
+		elif step < 0 :
+			return Direction.up
 
 		# horizontal check
-		step = head[0] - pre_head[0]
+		step = cur[0] - pre[0]
 
 		if step > 0 :
-			return Direction.left
-		elif step < 0 :
 			return Direction.right
-
+		elif step < 0 :
+			return Direction.left
+		
 		return 0
 
+	# opposite_direction of get_step
+	def impossible_way(self) :
+		d = self.get_step_direction(len(self.body) - 1)
+
+		return Direction.opposite(d)
+
+	def is_on_body(self, pos) :
+		for b in self.body :
+			if b[0] == pos[0] and b[1] == pos[1] :
+				return True
+
+		return False
+
 	def move(self, direction, board):
-		head = self.body[len(self.body)-1]
+		head = deepcopy( self.body[len(self.body)-1] )
 		do_not_go = self.impossible_way()
 
 		if do_not_go == direction :
@@ -50,58 +60,75 @@ class Snake :
 			head[0] -= 1
 		elif direction == Direction.right:
 			head[0] += 1
+		else :
+			return -1
 
 		# check collision with tail
-		for tail in body :
-			if tail[0] == head[0] and tail[1] == head[1] :
+		for i in range(len(self.body)-1) :
+			if self.body[i][0] == head[0] and self.body[i][1] == head[1] :
 				return 1
 
 		# check collision with wall
 		if board.check_collision(head[0], head[1]) :
+			print("or here")
 			return 1
 
 		# moving head
 		self.body.append(head)
-
 		# check snake got fruit
 		if board.is_got_fruit(head[0], head[1]):
+			board.place_fruit_randomly(self.is_on_body)
+		else :
 			del self.body[0]
 
 		return 0
 
-	def draw(self, screen, block_size):
+	def draw(self, screen, offset):
+		pre_d = self.get_step_direction(1)
+		cur_d = 0
+
+		# Tail
 		block.snake_tail_block.draw(
 			screen, 
 			self.body[0][0],
 			self.body[0][1],
-			block_size
+			self.block_size,
+			StrightAngle[pre_d.name],
+			offset
 		)
-		pre = self.body[0]
 
-		for i in range(1, self.body-1) :
-			next_b = self.body[i+1]
+		# Middel Body
+		for i in range(1, len(self.body)-1) :
+			cur_d = self.get_step_direction(i+1)
 
-			# stright body
-			if pre[0] == next_b[0] and pre[1] == next_b[0] :
+			if cur_d == pre_d :		# stright body
 				block.snake_straight_block.draw(
 					screen, 
 					self.body[i][0],
 					self.body[i][1],
-					block_size
+					self.block_size,
+					StrightAngle[cur_d.name],
+					offset
 				)
 
-			# curve body
-			else :
+			else :					# curve body
 				block.snake_curve_block.draw(
 					screen, 
 					self.body[i][0],
 					self.body[i][1],
-					block_size
+					self.block_size,
+					CurveAngle[pre_d.name + '_' + cur_d.name],
+					offset
 				)
 
+			pre_d = self.get_step_direction(i+1)
+
+		# Head
 		block.snake_head_block.draw(
 			screen, 
-			self.body[len(self.body)][0],
-			self.body[len(self.body)][1],
-			block_size
+			self.body[len(self.body)-1][0],
+			self.body[len(self.body)-1][1],
+			self.block_size,
+			StrightAngle[cur_d.name],
+			offset
 		)

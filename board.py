@@ -1,4 +1,6 @@
 import block
+from random import randint
+import pygame
 
 class Board :
 	
@@ -6,7 +8,7 @@ class Board :
 	fruit = [0, 0]
 	wall = []
 
-	def __init__(self, width, height, inc_sride, block_size = 25) :
+	def __init__(self, width, height, inc_sride, block_size = 15) :
 		self.width = width
 		self.height = height
 		self.inc_sride = inc_sride
@@ -20,11 +22,22 @@ class Board :
 	def set_block_size(self, size):
 		self.block_size = size
 
-	def set_fruit(self, x, y):
-		self.fruit[0] = x
-		self.fruit[1] = y
+	def place_fruit_randomly(self, checker):
+		result = True
+
+		while result:
+			self.fruit[0] = randint(0, self.width - 1)
+			self.fruit[1] = randint(0, self.height - 1)
+
+			result = checker(self.fruit)
 
 	def check_collision(self, x, y):
+		if x < 0 or x > self.width - 1 :
+			return True
+		
+		if y < 0 or y > self.height - 1 :
+			return True
+
 		for w in self.wall:
 			if w[0] == x and w[1] == y :
 				return True
@@ -37,11 +50,31 @@ class Board :
 
 		return False
 
-	def draw(self, screen, left, top) :
-		
+	def get_boarderline(self, width, height):
+		boarder_line = (height - self.block_size*self.height) / 2
+		return boarder_line
+
+	def draw(self, screen, width, height) :
+		intire_board = height - self.block_size*self.height
+		boarder_line =  intire_board / 2
+
+		# Boarder Line
+		pygame.draw.rect(
+			screen, 
+			(255, 255, 255), 
+			[0, 0, height + boarder_line, height + boarder_line]
+		)
+
 		for i in range(self.width) :
 			for j in range(self.height) :
-				x = i * self.block_size + left
-				y = j * self.block_size + top
+				x = i
+				y = j
 
-				block.board_block.draw(screen, x, y, self.block_size)
+				block.board_block.draw(screen, x, y, self.block_size, offset=[boarder_line, boarder_line])
+		
+		block.fruit_block.draw(
+			screen, 
+			self.fruit[0], self.fruit[1],
+			self.block_size,
+			offset=[boarder_line, boarder_line]
+		)
