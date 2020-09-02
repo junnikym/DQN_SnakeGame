@@ -2,6 +2,8 @@ from block import Direction, Block, CurveAngle, StrightAngle
 import block
 from copy import deepcopy
 
+EATEN_CODE = 2
+
 class Snake :
 	body = []
 	
@@ -45,6 +47,7 @@ class Snake :
 		return False
 
 	def move(self, direction, board):
+		is_eaten = 0
 		head = deepcopy( self.body[len(self.body)-1] )
 		do_not_go = self.impossible_way()
 
@@ -70,14 +73,14 @@ class Snake :
 
 		# check collision with wall
 		if board.check_collision(head[0], head[1]) :
-			print("or here")
 			return 1
 
 		# moving head
 		self.body.append(head)
 		# check snake got fruit
 		if board.is_got_fruit(head[0], head[1]):
-			board.place_fruit_randomly(self.is_on_body)
+			board.hide_fruit()
+			return EATEN_CODE
 		else :
 			del self.body[0]
 
