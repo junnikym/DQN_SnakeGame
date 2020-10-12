@@ -84,6 +84,16 @@ class SnakeGame:
 
 		return result
 
+	# Only for AI
+	def step(direction):
+		"""
+			game over 	: return -1
+			other 		: return reward value
+		"""
+
+		pass
+
+	# Only for Player
 	def run(self):
 		while True:
 			for event in pygame.event.get():
